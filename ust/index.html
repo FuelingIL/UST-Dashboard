@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Illinois Underground Storage Tanks</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black:    #0d0d0d;
+    --darkgrey: #1c1c1c;
+    --midgrey:  #2e2e2e;
+    --grey:     #5a5a5a;
+    --ltgrey:   #a0a0a0;
+    --border:   #e2e2e2;
+    --offwhite: #f5f5f5;
+    --white:    #ffffff;
+    --green:    #2e7d32;
+    --green-mid:#43a047;
+    --green-lt: #81c784;
+    --green-bg: #f1f8f1;
+    --red:      #c62828;
+    --red-lt:   #ef9a9a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--offwhite);
+    color: var(--black);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--black);
+    padding: clamp(24px, 4vw, 44px) clamp(20px, 5vw, 56px) clamp(20px, 3vw, 32px);
+  }
+  .header-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 5vw, 52px);
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--white);
+  }
+  .header-accent { color: var(--green-lt); }
+  .header-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(10px, 1.5vw, 12px);
+    color: var(--ltgrey);
+    margin-top: 8px;
+    letter-spacing: 0.4px;
+  }
+  .badge-group { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex-shrink: 0; }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    border: 1px solid;
+  }
+  .badge-green { border-color: var(--green-lt); color: var(--green-lt); background: rgba(129,199,132,0.08); }
+  .badge-white { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.05); }
+
+  /* ── TABS ── */
+  .tabs {
+    background: var(--darkgrey);
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 14px 20px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 17px;
+    letter-spacing: 1.5px;
+    color: var(--ltgrey);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--white); }
+  .tab-btn.active {
+    color: var(--green-lt);
+    border-bottom-color: var(--green-lt);
+    background: rgba(129,199,132,0.06);
+  }
+
+  /* ── LAYOUT ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .content {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: clamp(24px, 4vw, 44px) clamp(16px, 4vw, 48px);
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--black);
+    border-radius: 4px;
+    padding: 22px 18px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .sc-green::after  { background: var(--green); }
+  .sc-green-lt::after { background: var(--green-lt); }
+  .sc-white::after  { background: rgba(255,255,255,0.4); }
+  .sc-red::after    { background: var(--red); }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 5vw, 48px);
+    line-height: 1;
+    letter-spacing: 1px;
+  }
+  .sc-green    .stat-num { color: var(--green-lt); }
+  .sc-green-lt .stat-num { color: #a5d6a7; }
+  .sc-white    .stat-num { color: var(--white); }
+  .sc-red      .stat-num { color: var(--red-lt); }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ltgrey);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 5px;
+    line-height: 1.35;
+  }
+  .stat-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--grey);
+    margin-top: 5px;
+  }
+
+  /* ── GRID ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── CHART BLOCKS ── */
+  .chart-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: clamp(18px, 3vw, 28px);
+    margin-bottom: 0;
+  }
+  .chart-block.full { grid-column: 1 / -1; margin-bottom: 16px; }
+  .chart-block + .chart-block { margin-top: 0; }
+
+  .chart-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 19px;
+    letter-spacing: 1px;
+    color: var(--black);
+    margin-bottom: 3px;
+  }
+  .chart-desc {
+    font-size: 12px;
+    color: var(--grey);
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  /* ── BAR CHART ── */
+  .bar-chart { display: flex; flex-direction: column; gap: 9px; }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 60px;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+  @media (max-width: 420px) {
+    .bar-row { grid-template-columns: 90px 1fr 48px; }
+  }
+  .bar-label { color: var(--darkgrey); font-weight: 500; text-align: right; line-height: 1.3; font-size: 11px; }
+  .bar-track { background: var(--offwhite); border-radius: 2px; height: 18px; overflow: hidden; border: 1px solid var(--border); }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 0.85s cubic-bezier(0.16,1,0.3,1); width: 0; }
+  .bar-val { color: var(--grey); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  /* ── TIMELINE ── */
+  .timeline { display: flex; align-items: flex-end; gap: 5px; height: 130px; padding-top: 8px; }
+  .tl-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+  .tl-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
+  .tl-bar {
+    width: 100%; border-radius: 2px 2px 0 0;
+    transition: height 0.75s cubic-bezier(0.16,1,0.3,1);
+    height: 0; position: relative; cursor: pointer;
+  }
+  .tl-bar:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: var(--black); color: var(--white);
+    font-size: 10px; padding: 4px 8px; border-radius: 2px;
+    white-space: nowrap; font-family: 'JetBrains Mono', monospace; z-index: 10;
+  }
+  .tl-label { font-size: 9px; color: var(--grey); text-align: center; line-height: 1.2; }
+
+  /* ── INSIGHT BOX ── */
+  .insight {
+    background: var(--black);
+    color: var(--white);
+    border-radius: 4px;
+    padding: clamp(20px, 3vw, 28px) clamp(18px, 3vw, 32px);
+    margin-bottom: 28px;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    border-left: 4px solid var(--green);
+  }
+  .insight-icon { font-size: 26px; flex-shrink: 0; line-height: 1.2; }
+  .insight-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: var(--green-lt);
+    margin-bottom: 6px;
+  }
+  .insight-text { font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.82); }
+  .insight-text strong { color: var(--green-lt); font-weight: 600; }
+
+  /* ── DONUT ── */
+  .donut-wrap { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--darkgrey); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── FACILITY CARDS ── */
+  .facility-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .facility-card {
+    background: var(--offwhite);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 12px;
+    display: flex; flex-direction: column;
+    align-items: center; text-align: center; gap: 6px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .facility-card:hover { border-color: var(--green); background: var(--green-bg); }
+  .facility-emoji { font-size: 26px; line-height: 1; }
+  .facility-label { font-size: 10px; font-weight: 600; color: var(--grey); text-transform: uppercase; letter-spacing: 0.6px; line-height: 1.3; }
+  .facility-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--black); line-height: 1; }
+  .facility-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ltgrey); }
+
+  /* ── FUND MATH BOXES ── */
+  .fund-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .fund-box {
+    background: var(--offwhite);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px 14px 12px;
+  }
+  .fund-label { font-size: 10px; font-weight: 600; color: var(--grey); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px; }
+  .fund-num { font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: 1; }
+  .fund-num.green { color: var(--green); }
+  .fund-num.white { color: var(--black); }
+  .fund-note { font-size: 11px; color: var(--grey); margin-top: 3px; line-height: 1.4; }
+
+  .context-note {
+    margin-top: 14px;
+    padding: 13px 16px;
+    background: var(--green-bg);
+    border: 1px solid rgba(46,125,50,0.2);
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--darkgrey);
+    line-height: 1.6;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--black);
+    color: var(--grey);
+    text-align: center;
+    padding: 18px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    margin-top: 40px;
+    line-height: 1.7;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .panel.active > .content > * {
+    animation: fadeUp 0.35s ease both;
+  }
+  .panel.active > .content > *:nth-child(1) { animation-delay: 0.04s; }
+  .panel.active > .content > *:nth-child(2) { animation-delay: 0.08s; }
+  .panel.active > .content > *:nth-child(3) { animation-delay: 0.12s; }
+  .panel.active > .content > *:nth-child(4) { animation-delay: 0.16s; }
+
+  /* ── SQUARESPACE EMBED SAFETY ── */
+  img { max-width: 100%; }
+  a { color: var(--green); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-title">Illinois <span class="header-accent">Underground</span><br>Storage Tanks</div>
+      <div class="header-sub">OSFM FACILITY REGISTRY &nbsp;·&nbsp; 31,900 TANK RECORDS &nbsp;·&nbsp; 104TH GENERAL ASSEMBLY</div>
+    </div>
+    <div class="badge-group">
+      <div class="badge badge-white">HB4941 — AGED UST REPLACEMENT</div>
+      <div class="badge badge-green">HB4838 / SB2965 — RENEWABLE FUEL INFRASTRUCTURE</div>
+    </div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('overview', this)">📊 Full Overview</button>
+  <button class="tab-btn" onclick="switchTab('renewable', this)">🌿 Renewable Fuel</button>
+  <button class="tab-btn" onclick="switchTab('aged', this)">⏳ Aged Tanks</button>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PANEL 1 — FULL OVERVIEW
+══════════════════════════════════════ -->
+<div id="panel-overview" class="panel active">
+<div class="content">
+
+  <div class="stat-row">
+    <div class="stat-card sc-white">
+      <div class="stat-num">31,900</div>
+      <div class="stat-label">Total Tank Records</div>
+      <div class="stat-note">Statewide registry</div>
+    </div>
+    <div class="stat-card sc-green">
+      <div class="stat-num">17,637</div>
+      <div class="stat-label">Currently Active</div>
+      <div class="stat-note">55.3% of registry</div>
+    </div>
+    <div class="stat-card sc-white">
+      <div class="stat-num">12,531</div>
+      <div class="stat-label">Tanks Removed</div>
+      <div class="stat-note">39.3% of registry</div>
+    </div>
+    <div class="stat-card sc-white">
+      <div class="stat-num">756</div>
+      <div class="stat-label">Abandoned In Place</div>
+      <div class="stat-note">2.4% of registry</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="chart-block">
+      <div class="chart-title">Tank Status Breakdown</div>
+      <div class="chart-desc">All 31,900 records by current regulatory status.</div>
+      <div class="bar-chart" id="status-bars"></div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-title">Top Products Stored</div>
+      <div class="chart-desc">Active tanks only. Renewables are a small but growing share.</div>
+      <div class="bar-chart" id="product-bars"></div>
+    </div>
+  </div>
+
+  <div class="chart-block full">
+    <div class="chart-title">Facility Types</div>
+    <div class="chart-desc">Gas stations dominate, but USTs span a wide range of facility categories statewide.</div>
+    <div class="facility-grid" id="facility-grid" style="margin-top:16px;"></div>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PANEL 2 — RENEWABLE FUEL
+══════════════════════════════════════ -->
+<div id="panel-renewable" class="panel">
+<div class="content">
+
+  <div class="insight">
+    <div class="insight-icon">🌿</div>
+    <div>
+      <div class="insight-title">Cleaner Fuels Need Better Infrastructure</div>
+      <div class="insight-text">Only <strong>5.9% of active tanks</strong> statewide store renewable fuels like E85 or ethanol. Upgrading storage and dispensing equipment costs roughly <strong>$320,000 per facility</strong> — out of reach for most independent operators. A <strong>$12M grant program</strong> funded entirely from the existing UST Fund (currently $82M and growing) would directly close this gap at <strong>zero cost to general revenue</strong>.</div>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card sc-green">
+      <div class="stat-num">1,037</div>
+      <div class="stat-label">Active Renewable<br>Fuel Tanks</div>
+      <div class="stat-note">E85, ethanol, B-11</div>
+    </div>
+    <div class="stat-card sc-green-lt">
+      <div class="stat-num">5.9%</div>
+      <div class="stat-label">Share of All<br>Active Tanks</div>
+      <div class="stat-note">vs. 17,637 total active</div>
+    </div>
+    <div class="stat-card sc-white">
+      <div class="stat-num">$12M</div>
+      <div class="stat-label">Proposed Grant<br>Program Total</div>
+      <div class="stat-note">$3M/quarter · 1 year</div>
+    </div>
+    <div class="stat-card sc-white">
+      <div class="stat-num">$320K</div>
+      <div class="stat-label">Avg Upgrade Cost<br>Per Facility</div>
+      <div class="stat-note">Prohibitive for small operators</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="chart-block">
+      <div class="chart-title">Renewable vs. Conventional</div>
+      <div class="chart-desc">The vast majority of active tanks still store conventional fuel only.</div>
+      <div class="donut-wrap" style="margin-top:16px;">
+        <svg width="130" height="130" viewBox="0 0 130 130" style="flex-shrink:0;">
+          <circle cx="65" cy="65" r="48" fill="none" stroke="#e2e2e2" stroke-width="20"/>
+          <circle cx="65" cy="65" r="48" fill="none" stroke="#2e7d32" stroke-width="20"
+            stroke-dasharray="17.9 283.9" stroke-dashoffset="0"
+            transform="rotate(-90 65 65)"/>
+          <text x="65" y="60" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="24" fill="#0d0d0d">5.9%</text>
+          <text x="65" y="75" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#5a5a5a">renewable</text>
+        </svg>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="legend-item"><div class="legend-dot" style="background:#2e7d32"></div>Renewable: 1,037 tanks</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e2e2e2;border:1px solid #ccc"></div>Conventional: 16,600 tanks</div>
+          <div style="font-size:11px;color:var(--grey);margin-top:4px;line-height:1.5;">Only <strong style="color:var(--black);">597</strong> active E85 tanks<br>serve Illinois drivers statewide.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">E85 Tanks by County</div>
+      <div class="chart-desc">Concentrated in northeastern Illinois. Large downstate areas have little to no E85 infrastructure.</div>
+      <div class="bar-chart" id="e85-bars" style="margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <div class="chart-block full">
+    <div class="chart-title">The Fund Math</div>
+    <div class="chart-desc">HB4838 / SB2965 transfers $3M per quarter for four quarters — only while the UST Fund maintains a $50M minimum balance.</div>
+    <div class="fund-row">
+      <div class="fund-box">
+        <div class="fund-label">UST Fund Balance</div>
+        <div class="fund-num green">$81.6M</div>
+        <div class="fund-note">Available as of May 2026</div>
+      </div>
+      <div class="fund-box">
+        <div class="fund-label">Required Floor</div>
+        <div class="fund-num white">$50M</div>
+        <div class="fund-note">Transfers pause if balance dips below this</div>
+      </div>
+      <div class="fund-box">
+        <div class="fund-label">Proposed Transfer</div>
+        <div class="fund-num white">$12M</div>
+        <div class="fund-note">Over 4 quarters, July 2026–June 2027</div>
+      </div>
+      <div class="fund-box">
+        <div class="fund-label">Cost to General Revenue</div>
+        <div class="fund-num green">$0</div>
+        <div class="fund-note">Funded entirely by industry registration fees</div>
+      </div>
+    </div>
+    <div class="context-note">
+      <strong>Context:</strong> IEPA's own bill (HB4960 / SB3667) proposes moving $5M out of the fund annually <em>in perpetuity</em> into the Brownfields Redevelopment Fund. If the fund can sustain an ongoing $5M annual draw, a one-time $12M finite transfer is well within bounds.
+    </div>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PANEL 3 — AGED TANKS
+══════════════════════════════════════ -->
+<div id="panel-aged" class="panel">
+<div class="content">
+
+  <div class="insight">
+    <div class="insight-icon">⏳</div>
+    <div>
+      <div class="insight-title">The Clock Is Ticking Underground</div>
+      <div class="insight-text">Typical UST warranties last <strong>30 years</strong>. Tanks installed before January 1, 1976 — now at least <strong>50 years old</strong> — are at the highest risk of corrosion and leaks. IEPA and OSFM data estimates roughly <strong>650 such tanks</strong> exist statewide. Registry data confirms <strong>563 are still actively in use today</strong>. Every day without action is a day closer to soil and groundwater contamination.</div>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card sc-red">
+      <div class="stat-num">563</div>
+      <div class="stat-label">Pre-1976 Tanks<br>Still In Active Use</div>
+      <div class="stat-note">≥ 50 years old</div>
+    </div>
+    <div class="stat-card sc-white">
+      <div class="stat-num">17,637</div>
+      <div class="stat-label">Total Active<br>Tanks Statewide</div>
+      <div class="stat-note">All facilities</div>
+    </div>
+    <div class="stat-card sc-white">
+      <div class="stat-num">$33K</div>
+      <div class="stat-label">Avg Cost to Remove<br>a Single UST</div>
+      <div class="stat-note">Per IEPA / OSFM estimates</div>
+    </div>
+    <div class="stat-card sc-green">
+      <div class="stat-num">$82M</div>
+      <div class="stat-label">UST Fund Balance<br>Available</div>
+      <div class="stat-note">As of May 6, 2026</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="chart-block">
+      <div class="chart-title">Age Profile of Active Tanks</div>
+      <div class="chart-desc">Installation decade of all tanks currently in service. Red bars pre-date 1976.</div>
+      <div class="timeline" id="age-timeline" style="margin-top:8px;"></div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-title">Pre-1976 Tanks by Facility Type</div>
+      <div class="chart-desc">Most aged tanks are at retail gas stations — but hospitals, utilities, and schools are also affected.</div>
+      <div class="bar-chart" id="facility-bars" style="margin-top:4px;"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+
+<footer>
+  Data: Illinois OSFM UST Facility Registry &nbsp;·&nbsp; Illinois Fuel &amp; Retail Association &nbsp;·&nbsp; UST Fund balance as of May 6, 2026<br>
+  HB4941 · HB4838 · SB2965 · 104th Illinois General Assembly
+</footer>
+
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const statusData = [
+  {label:'Currently In Use', count:17637, color:'#2e7d32'},
+  {label:'Removed',          count:12531, color:'#a0a0a0'},
+  {label:'Abandoned In Place',count:756,  color:'#5a5a5a'},
+  {label:'Unknown',          count:318,   color:'#c0c0c0'},
+  {label:'Does Not Exist',   count:291,   color:'#d0d0d0'},
+  {label:'Out of Service',   count:86,    color:'#e0e0e0'},
+];
+
+const productData = [
+  {label:'Diesel Fuel',         count:7419, color:'#1c1c1c'},
+  {label:'Gasoline',            count:7014, color:'#2e2e2e'},
+  {label:'Gasoline - Regular',  count:6275, color:'#444'},
+  {label:'Gasoline - Premium',  count:3929, color:'#666'},
+  {label:'Used Oil',            count:1675, color:'#999'},
+  {label:'E85',                 count:597,  color:'#2e7d32'},
+  {label:'B-11',                count:510,  color:'#43a047'},
+];
+
+const facilityTypeData = [
+  {label:'Gas Station',     count:22532, emoji:'⛽'},
+  {label:'Industrial/Mfg', count:1346,  emoji:'🏭'},
+  {label:'City / Town',    count:1092,  emoji:'🏛️'},
+  {label:'Self-Svc (Both)',count:808,   emoji:'🔧'},
+  {label:'Commercial',     count:659,   emoji:'🏪'},
+  {label:'Trucking',       count:650,   emoji:'🚛'},
+  {label:'State',          count:580,   emoji:'🏢'},
+  {label:'Hospital',       count:509,   emoji:'🏥'},
+  {label:'Utility',        count:505,   emoji:'⚡'},
+  {label:'Airport',        count:470,   emoji:'✈️'},
+];
+
+const e85Data = [
+  {name:'Cook',     count:200},
+  {name:'Will',     count:57},
+  {name:'Du Page',  count:42},
+  {name:'Kane',     count:37},
+  {name:'Lake',     count:34},
+  {name:'McHenry',  count:22},
+  {name:'Winnebago',count:16},
+  {name:'Sangamon', count:11},
+  {name:'LaSalle',  count:11},
+  {name:'McLean',   count:7},
+  {name:'Champaign',count:7},
+  {name:'Kankakee', count:7},
+];
+
+const ageData = [
+  {label:'Pre-1960', count:22,   old:true},
+  {label:'1960–75',  count:541,  old:true},
+  {label:'1976–85',  count:1702, old:false},
+  {label:'1986–94',  count:4685, old:false},
+  {label:'1995–05',  count:5121, old:false},
+  {label:'2006–15',  count:2535, old:false},
+  {label:'2016+',    count:2780, old:false},
+];
+
+const facilityAgedData = [
+  {label:'Gas Station',    count:425},
+  {label:'Industrial/Mfg', count:23},
+  {label:'City / Town',    count:19},
+  {label:'Utility',        count:19},
+  {label:'Hospital',       count:16},
+  {label:'School/College', count:11},
+  {label:'Commercial',     count:9},
+];
+
+// ── RENDER FUNCTIONS ──────────────────────────────────────────────────────────
+function renderBars(id, data, colorFn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const max = Math.max(...data.map(d => d.count));
+  el.innerHTML = data.map(d => {
+    const pct = (d.count / max * 100).toFixed(1);
+    const color = typeof colorFn === 'function' ? colorFn(d) : (d.color || colorFn);
+    return `<div class="bar-row">
+      <div class="bar-label">${d.label || d.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="background:${color}" data-pct="${pct}"></div></div>
+      <div class="bar-val">${d.count.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+  // Animate after paint
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.pct + '%');
+  }));
+}
+
+function renderTimeline(id, data) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const max = Math.max(...data.map(d => d.count));
+  el.innerHTML = data.map(d => {
+    const h = Math.round((d.count / max) * 105);
+    const color = d.old ? '#c62828' : '#2e7d32';
+    return `<div class="tl-col">
+      <div class="tl-bar-wrap">
+        <div class="tl-bar" style="background:${color};opacity:0.88"
+          data-h="${h}" data-tip="${d.label}: ${d.count.toLocaleString()} tanks"></div>
+      </div>
+      <div class="tl-label">${d.label}</div>
+    </div>`;
+  }).join('');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.querySelectorAll('.tl-bar').forEach(b => b.style.height = b.dataset.h + 'px');
+  }));
+}
+
+function renderFacilityGrid(id, data) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const total = data.reduce((s, d) => s + d.count, 0);
+  el.innerHTML = data.map(d => {
+    const pct = (d.count / total * 100).toFixed(1);
+    return `<div class="facility-card">
+      <div class="facility-emoji">${d.emoji}</div>
+      <div class="facility-label">${d.label}</div>
+      <div class="facility-num">${d.count.toLocaleString()}</div>
+      <div class="facility-pct">${pct}% of total</div>
+    </div>`;
+  }).join('');
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+const initialized = {};
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (!initialized[name]) {
+    initialized[name] = true;
+    initPanel(name);
+  }
+}
+
+function initPanel(name) {
+  if (name === 'overview') {
+    renderBars('status-bars', statusData);
+    renderBars('product-bars', productData);
+    renderFacilityGrid('facility-grid', facilityTypeData);
+  } else if (name === 'renewable') {
+    renderBars('e85-bars', e85Data, '#2e7d32');
+  } else if (name === 'aged') {
+    renderTimeline('age-timeline', ageData);
+    renderBars('facility-bars', facilityAgedData, '#1c1c1c');
+  }
+}
+
+// Init on load
+initialized['overview'] = true;
+initPanel('overview');
+</script>
+</body>
+</html>
