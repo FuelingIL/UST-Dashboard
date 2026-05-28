@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Illinois UST Fund Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #080E14;
+    --bg2:       #0F1923;
+    --bg3:       #0A141C;
+    --border:    #1A2A38;
+    --border2:   #1E3248;
+    --text:      #C8D6E0;
+    --muted:     #5A7A8E;
+    --dim:       #3A5060;
+    --heading:   #E8F4FF;
+    --blue:      #2C5F8A;
+    --green:     #4A7C59;
+    --gold:      #C8A96E;
+    --purple:    #7B5EA7;
+    --teal:      #3A7A8C;
+    --slate:     #7B8FA0;
+    --font-mono: 'DM Mono', monospace;
+    --font-head: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    min-height: 100vh;
+    padding-bottom: 48px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(180deg, #0D1820 0%, #080E14 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 36px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    animation: fadeUp 0.6s ease both;
+  }
+  .header-eyebrow {
+    color: var(--green);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .header-title {
+    font-family: var(--font-head);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--heading);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .header-sub {
+    color: #5A7A8E;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .balance-box {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 20px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .balance-label { color: #6B8A9E; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .balance-value { color: var(--gold); font-family: var(--font-head); font-size: 24px; font-weight: 700; line-height: 1.2; }
+  .balance-date  { color: var(--dim); font-size: 10px; }
+
+  /* ── Main ── */
+  .main { padding: 28px 36px 0; }
+
+  /* ── Stat cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: linear-gradient(135deg, #111D27 0%, #0D1820 100%);
+    border-radius: 8px;
+    padding: 18px 20px;
+    border: 1px solid transparent;
+    border-left-width: 3px;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  .stat-label  { color: #6B8A9E; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value  { font-family: var(--font-head); font-size: 24px; font-weight: 700; line-height: 1; }
+  .stat-sub    { color: var(--dim); font-size: 10px; margin-top: 5px; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+    margin-bottom: 22px;
+    overflow-x: auto;
+  }
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 6px 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    transition: all 0.2s;
+    white-space: nowrap;
+    margin-bottom: -1px;
+  }
+  .tab:hover { background: #1A2A38; color: var(--text); }
+  .tab.active { background: #1A2D3E; color: var(--heading); border-bottom-color: var(--blue); }
+
+  /* ── Panel ── */
+  .panel {
+    background: linear-gradient(135deg, #0F1923 0%, #0A141C 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    animation: fadeUp 0.5s ease 0.2s both;
+  }
+  .panel-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--heading); margin-bottom: 4px; }
+  .panel-desc  { color: var(--muted); font-size: 11px; margin-bottom: 20px; line-height: 1.5; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Chart wrapper ── */
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* ── Mini cards ── */
+  .mini-grid { display: grid; gap: 12px; margin-top: 16px; }
+  .mini-grid-2 { grid-template-columns: 1fr 1fr; }
+  .mini-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .mini-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .mini-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .mini-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .mini-value { font-family: var(--font-head); font-size: 16px; font-weight: 700; line-height: 1.2; }
+  .mini-sub   { color: var(--dim); font-size: 10px; margin-top: 3px; }
+
+  /* ── Breakdown layout ── */
+  .breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .breakdown-section {}
+  .breakdown-heading { color: var(--muted); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
+  .donut-wrap { display: flex; align-items: center; gap: 16px; }
+  .donut-canvas-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
+  .donut-legend {}
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; cursor: default; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .legend-name { color: #8FA8BC; font-size: 11px; line-height: 1.3; flex: 1; }
+  .legend-pct  { font-family: var(--font-head); font-size: 12px; font-weight: 600; }
+
+  /* ── Alert box ── */
+  .alert {
+    margin-top: 20px;
+    background: var(--bg3);
+    border: 1px solid #1E3040;
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .alert-body { color: var(--gold); font-size: 11px; margin-bottom: 6px; line-height: 1.5; }
+  .alert-sub  { color: var(--dim); font-size: 10px; line-height: 1.5; }
+
+  /* ── Footer ── */
+  .footer { margin-top: 18px; color: var(--dim); font-size: 10px; text-align: right; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .header { padding: 20px 18px; }
+    .main   { padding: 20px 18px 0; }
+    .panel  { padding: 18px 16px; }
+    .mini-grid-3 { grid-template-columns: 1fr 1fr; }
+    .mini-grid-4 { grid-template-columns: 1fr 1fr; }
+    .breakdown-grid { grid-template-columns: 1fr; gap: 24px; }
+    .header-title { font-size: 20px; }
+  }
+  @media (max-width: 420px) {
+    .mini-grid-2, .mini-grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <div class="header-eyebrow">Illinois · Special State Fund #0072</div>
+    <div class="header-title">Underground Storage Tank Fund</div>
+    <div class="header-sub">Revenue &amp; Expenditure Analysis &nbsp;·&nbsp; Jul 2021 – Jul 2025</div>
+  </div>
+  <div class="balance-box">
+    <div class="balance-label">Current Balance</div>
+    <div class="balance-value">$81.99M</div>
+    <div class="balance-date">as of May 6, 2026</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card" style="border-color:#2C5F8A33;border-left-color:#2C5F8A;animation-delay:0.1s">
+      <div class="stat-label">Total Revenue (4.5 yr)</div>
+      <div class="stat-value" style="color:#2C5F8A">$347.2M</div>
+      <div class="stat-sub">~$77.2M / yr avg</div>
+    </div>
+    <div class="stat-card" style="border-color:#C8A96E33;border-left-color:#C8A96E;animation-delay:0.2s">
+      <div class="stat-label">Total Expenditures</div>
+      <div class="stat-value" style="color:#C8A96E">$303.9M</div>
+      <div class="stat-sub">~$67.5M / yr avg</div>
+    </div>
+    <div class="stat-card" style="border-color:#4A7C5933;border-left-color:#4A7C59;animation-delay:0.3s">
+      <div class="stat-label">Cleanup Grants Paid</div>
+      <div class="stat-value" style="color:#4A7C59">$68.0M</div>
+      <div class="stat-sub">22.4% of spending</div>
+    </div>
+    <div class="stat-card" style="border-color:#7B5EA733;border-left-color:#7B5EA7;animation-delay:0.4s">
+      <div class="stat-label">Investment Income</div>
+      <div class="stat-value" style="color:#7B5EA7">$13.9M</div>
+      <div class="stat-sub">22× growth since Jul '21</div>
+    </div>
+    <div class="stat-card" style="border-color:#3A7A8C33;border-left-color:#3A7A8C;animation-delay:0.5s">
+      <div class="stat-label">Motor Fuel Tax</div>
+      <div class="stat-value" style="color:#3A7A8C">$235.2M</div>
+      <div class="stat-sub">67.7% of all revenue</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('growth',this)">Fund Growth</button>
+    <button class="tab" onclick="showTab('revenue',this)">Revenue</button>
+    <button class="tab" onclick="showTab('spending',this)">Spending</button>
+    <button class="tab" onclick="showTab('breakdown',this)">Breakdown</button>
+  </div>
+
+  <!-- Panel -->
+  <div class="panel">
+
+    <!-- Fund Growth -->
+    <div id="tab-growth" class="tab-content active">
+      <div class="panel-title">Investment Income as Fund Growth Proxy</div>
+      <div class="panel-desc">Monthly investment income reflects the fund's growing cash balance — up 22× since July 2021, confirming the fund is accumulating faster than it spends.</div>
+      <div class="chart-wrap"><canvas id="chartGrowth"></canvas></div>
+      <div class="mini-grid mini-grid-2">
+        <div class="mini-card" style="border-left-color:#7B5EA7">
+          <div class="mini-label">Jul 2021 — Monthly Avg</div>
+          <div class="mini-value" style="color:#7B5EA7">$11,486</div>
+          <div class="mini-sub">fund just beginning to accumulate</div>
+        </div>
+        <div class="mini-card" style="border-left-color:#7B5EA7">
+          <div class="mini-label">2024–2025 — Monthly Avg</div>
+          <div class="mini-value" style="color:#7B5EA7">~$383,000</div>
+          <div class="mini-sub">implies ~$80M+ fund balance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue -->
+    <div id="tab-revenue" class="tab-content">
+      <div class="panel-title">Monthly Revenue by Source</div>
+      <div class="panel-desc">Motor Fuel Tax is the dominant and consistent revenue driver at ~$5.6M/month. Note: MFT data has gaps in the FY23 reporting period.</div>
+      <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
+      <div class="mini-grid mini-grid-4" style="margin-top:18px">
+        <div class="mini-card" style="border-left-color:#2C5F8A">
+          <div class="mini-label">Motor Fuel Tax</div>
+          <div class="mini-value" style="color:#2C5F8A">$235.2M</div>
+          <div class="mini-sub">67.7% of total</div>
+        </div>
+        <div class="mini-card" style="border-left-color:#4A7C59">
+          <div class="mini-label">Statutory Transfers In</div>
+          <div class="mini-value" style="color:#4A7C59">$88.0M</div>
+          <div class="mini-sub">25.3% of total</div>
+        </div>
+        <div class="mini-card" style="border-left-color:#7B5EA7">
+          <div class="mini-label">Investment Income</div>
+          <div class="mini-value" style="color:#7B5EA7">$13.9M</div>
+          <div class="mini-sub">4.0% of total</div>
+        </div>
+        <div class="mini-card" style="border-left-color:#7B8FA0">
+          <div class="mini-label">UST Fees &amp; Other</div>
+          <div class="mini-value" style="color:#7B8FA0">$10.1M</div>
+          <div class="mini-sub">2.9% of total</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spending -->
+    <div id="tab-spending" class="tab-content">
+      <div class="panel-title">Monthly Cleanup Awards &amp; Grants (IEPA)</div>
+      <div class="panel-desc">Cleanup grant spending is variable and well below inflow. Over 4.5 years, only $68M was paid in cleanup — less than one year of motor fuel tax revenue.</div>
+      <div class="chart-wrap"><canvas id="chartSpending"></canvas></div>
+      <div class="mini-grid mini-grid-3">
+        <div class="mini-card" style="border-left-color:#4A7C59">
+          <div class="mini-label">Total Cleanup Grants (4.5 yr)</div>
+          <div class="mini-value" style="color:#4A7C59">$68.0M</div>
+          <div class="mini-sub">paid out to date</div>
+        </div>
+        <div class="mini-card" style="border-left-color:#C8A96E">
+          <div class="mini-label">Proposed RFIP Transfer</div>
+          <div class="mini-value" style="color:#C8A96E">$12M</div>
+          <div class="mini-sub">over one calendar year</div>
+        </div>
+        <div class="mini-card" style="border-left-color:#2C5F8A">
+          <div class="mini-label">RFIP vs. Annual Cleanup</div>
+          <div class="mini-value" style="color:#2C5F8A">17.6%</div>
+          <div class="mini-sub">a modest and finite draw</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Breakdown -->
+    <div id="tab-breakdown" class="tab-content">
+      <div class="panel-title">Full Fund Composition</div>
+      <div class="panel-desc">Where all money came from and where it went over 4.5 years. Over half of expenditures are statutory transfers out — not cleanup costs.</div>
+      <div class="breakdown-grid">
+        <div class="breakdown-section">
+          <div class="breakdown-heading">Revenue Sources · $347.2M Total</div>
+          <div class="donut-wrap">
+            <div class="donut-canvas-wrap"><canvas id="donutRev"></canvas></div>
+            <div class="donut-legend" id="legendRev"></div>
+          </div>
+        </div>
+        <div class="breakdown-section">
+          <div class="breakdown-heading">Expenditures · $303.9M Total</div>
+          <div class="donut-wrap">
+            <div class="donut-canvas-wrap"><canvas id="donutExp"></canvas></div>
+            <div class="donut-legend" id="legendExp"></div>
+          </div>
+        </div>
+      </div>
+      <div class="alert">
+        <div class="alert-body">⚠ Key Finding: Statutory transfers OUT ($156M) dwarf actual cleanup awards ($68M) — 2.3× as much money leaves the fund through transfers as is spent on remediation.</div>
+        <div class="alert-sub">This strengthens the case that proposed RFIP transfers ($12M total) represent a small, finite, and manageable draw on a fund that routinely handles larger outflows.</div>
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+
+  <div class="footer">Data source: IL Comptroller — UST Fund Revenue &amp; Expenditures Jul 2021–Jul 2025 &nbsp;·&nbsp; Fund #0072</div>
+
+</div><!-- /main -->
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+
+const MONTHS = [
+  "Jul '21","Aug '21","Sep '21","Oct '21","Nov '21","Dec '21",
+  "Jan '22","Feb '22","Mar '22","Apr '22","May '22","Jun '22",
+  "Jul '22","Aug '22","Sep '22","Oct '22","Nov '22","Dec '22",
+  "Jan '23","Feb '23","Mar '23","Apr '23","May '23","Jun '23",
+  "Jul '23","Aug '23","Sep '23","Oct '23","Nov '23","Dec '23",
+  "Jan '24","Feb '24","Mar '24","Apr '24","May '24","Jun '24",
+  "Jul '24","Aug '24","Sep '24","Oct '24","Nov '24","Dec '24",
+  "Jan '25","Feb '25","Mar '25","Apr '25","May '25","Jun '25","Jul '25"
+];
+
+const INVESTMENT = [
+  11486,10501,8077,8948,8294,10791,11982,16403,21145,50282,61155,93168,
+  129934,150686,244238,257043,301737,322711,350843,364356,330362,366626,
+  352636,363056,342919,345312,358475,348000,374043,369121,387163,397607,
+  387075,417204,410160,412057,428300,447651,447248,421326,438975,409367,
+  329328,245221,219602,241500,239481,241716,241716
+];
+
+const MFT_RAW = [
+  5727116,5786816,5539702,5868571,5780604,6297090,5570605,4669449,5575196,
+  5609267,5407266,5827383,null,null,null,null,null,null,null,null,null,null,null,null,
+  5611632,5424594,5844171,5493194,6072904,5576489,5210843,5180930,5065766,
+  5615747,5226215,5883300,5746201,5652851,5732895,5642833,6177045,5368662,
+  5482934,5365855,4950463,5531619,5544730,5875564,5531619
+];
+
+const GRANTS = [
+  0,1404184,536022,1489982,3194156,857923,1080127,1376666,1863208,1872717,
+  2084879,1465335,0,607407,682833,507210,954266,1015309,2391361,121809,
+  2480307,1550972,655388,2540296,893596,1450185,1756916,882127,1298878,
+  536218,1350601,1354685,1584124,1327724,1172644,2236492,12986,1618917,
+  1014738,841211,1739718,1473011,1714760,1258364,1641024,1728711,1368299,758744,758744
+];
+
+// Chart.js defaults
+Chart.defaults.color = '#4A6070';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 10;
+
+const gridColor = '#1A2A38';
+const tooltipStyle = {
+  backgroundColor: '#0F1923',
+  borderColor: '#2A3A4A',
+  borderWidth: 1,
+  titleColor: '#7B9AB0',
+  bodyColor: '#E8F0F5',
+  padding: 10,
+  titleFont: { family: "'DM Mono', monospace", size: 11 },
+  bodyFont: { family: "'DM Mono', monospace", size: 11 },
+};
+
+function fmtDollar(v) {
+  if (v == null) return '';
+  if (Math.abs(v) >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+  if (Math.abs(v) >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+  return '$' + Math.round(v);
+}
+
+// ── Chart: Fund Growth ────────────────────────────────────────────────────────
+const ctxG = document.getElementById('chartGrowth').getContext('2d');
+const gradG = ctxG.createLinearGradient(0,0,0,280);
+gradG.addColorStop(0,'rgba(123,94,167,0.28)');
+gradG.addColorStop(1,'rgba(123,94,167,0.02)');
+
+new Chart(ctxG, {
+  type: 'line',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'Investment Income',
+      data: INVESTMENT,
+      borderColor: '#7B5EA7',
+      backgroundColor: gradG,
+      borderWidth: 2,
+      fill: true,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0.4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ' ' + fmtDollar(ctx.raw) } }
+    },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { maxTicksLimit: 9 } },
+      y: { grid: { color: gridColor }, ticks: { callback: fmtDollar } }
+    }
+  }
+});
+
+// ── Chart: Revenue ────────────────────────────────────────────────────────────
+// Sparse — every 3rd month
+const sparseIdx = MONTHS.map((_,i) => i).filter(i => i % 3 === 0 || i === MONTHS.length-1);
+const sparseLabels = sparseIdx.map(i => MONTHS[i]);
+const sparseMFT    = sparseIdx.map(i => MFT_RAW[i]);
+const sparseInv    = sparseIdx.map(i => INVESTMENT[i]);
+
+const ctxR = document.getElementById('chartRevenue').getContext('2d');
+new Chart(ctxR, {
+  type: 'bar',
+  data: {
+    labels: sparseLabels,
+    datasets: [
+      { label: 'Motor Fuel Tax', data: sparseMFT, backgroundColor: '#2C5F8A', borderRadius: 2 },
+      { label: 'Investment Income', data: sparseInv, backgroundColor: '#7B5EA7', borderRadius: 2 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        labels: { color: '#7B9AB0', font: { family: "'DM Mono', monospace", size: 11 }, boxWidth: 10, padding: 16 }
+      },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + fmtDollar(ctx.raw) } }
+    },
+    scales: {
+      x: { grid: { color: gridColor }, stacked: false },
+      y: { grid: { color: gridColor }, ticks: { callback: fmtDollar } }
+    }
+  }
+});
+
+// ── Chart: Spending ───────────────────────────────────────────────────────────
+const ctxS = document.getElementById('chartSpending').getContext('2d');
+const gradS = ctxS.createLinearGradient(0,0,0,280);
+gradS.addColorStop(0,'rgba(74,124,89,0.7)');
+gradS.addColorStop(1,'rgba(74,124,89,0.3)');
+
+new Chart(ctxS, {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'Awards & Grants',
+      data: GRANTS,
+      backgroundColor: gradS,
+      borderRadius: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ' ' + fmtDollar(ctx.raw) } }
+    },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { maxTicksLimit: 10 } },
+      y: { grid: { color: gridColor }, ticks: { callback: fmtDollar } }
+    }
+  }
+});
+
+// ── Donuts ────────────────────────────────────────────────────────────────────
+const REV_DATA = [
+  { name: 'Motor Fuel Tax',        value: 235.19, color: '#2C5F8A', pct: '67.7%' },
+  { name: 'Statutory Transfers In',value: 88.01,  color: '#4A7C59', pct: '25.3%' },
+  { name: 'Investment Income',     value: 13.89,  color: '#7B5EA7', pct: '4.0%'  },
+  { name: 'UST Fees & Other',      value: 10.15,  color: '#7B8FA0', pct: '2.9%'  },
+];
+const EXP_DATA = [
+  { name: 'Statutory Transfers Out',value: 156.03, color: '#C8A96E', pct: '51.3%' },
+  { name: 'Awards & Grants',        value: 67.98,  color: '#4A7C59', pct: '22.4%' },
+  { name: 'Personnel',              value: 65.49,  color: '#2C5F8A', pct: '21.5%' },
+  { name: 'Operations',             value: 6.40,   color: '#7B8FA0', pct: '2.1%'  },
+  { name: 'Other',                  value: 8.03,   color: '#A0856B', pct: '2.6%'  },
+];
+
+function makeDonut(canvasId, legendId, items) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: items.map(d => d.name),
+      datasets: [{
+        data: items.map(d => d.value),
+        backgroundColor: items.map(d => d.color),
+        borderWidth: 0,
+        hoverOffset: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipStyle, callbacks: {
+          label: ctx => ' $' + ctx.raw + 'M  (' + items[ctx.dataIndex].pct + ')'
+        }}
+      }
+    }
+  });
+  // Build legend
+  const el = document.getElementById(legendId);
+  items.forEach(d => {
+    el.innerHTML += `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${d.color}"></div>
+        <div class="legend-name">${d.name}</div>
+        <div class="legend-pct" style="color:${d.color}">${d.pct}</div>
+      </div>`;
+  });
+}
+
+makeDonut('donutRev', 'legendRev', REV_DATA);
+makeDonut('donutExp', 'legendExp', EXP_DATA);
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
