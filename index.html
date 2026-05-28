@@ -199,17 +199,70 @@
   }
 
   /* ── Responsive ── */
-  @media (max-width: 640px) {
-    .header { padding: 20px 18px; }
-    .main   { padding: 20px 18px 0; }
-    .panel  { padding: 18px 16px; }
-    .mini-grid-3 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
     .mini-grid-4 { grid-template-columns: 1fr 1fr; }
+    .mini-grid-3 { grid-template-columns: 1fr 1fr; }
     .breakdown-grid { grid-template-columns: 1fr; gap: 24px; }
-    .header-title { font-size: 20px; }
   }
-  @media (max-width: 420px) {
-    .mini-grid-2, .mini-grid-3 { grid-template-columns: 1fr; }
+
+  @media (max-width: 640px) {
+    .header {
+      padding: 16px 16px 14px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .header-title { font-size: 18px; }
+    .header-eyebrow { font-size: 10px; }
+    .header-sub { font-size: 11px; }
+    .balance-box {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .balance-value { font-size: 20px; }
+
+    .main   { padding: 16px 14px 0; }
+    .panel  { padding: 16px 14px; }
+
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-card  { padding: 14px 12px; }
+    .stat-value { font-size: 20px; }
+    .stat-label { font-size: 9px; }
+
+    .tabs { gap: 2px; }
+    .tab  { padding: 7px 10px; font-size: 11px; }
+
+    .chart-wrap { height: 220px; }
+
+    .mini-grid-2 { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mini-grid-3 { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mini-grid-4 { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mini-card   { padding: 10px 10px; }
+    .mini-value  { font-size: 14px; }
+    .mini-label  { font-size: 9px; }
+
+    .panel-title { font-size: 14px; }
+    .panel-desc  { font-size: 10px; }
+
+    .donut-wrap { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .donut-canvas-wrap { width: 110px; height: 110px; }
+    .legend-name { font-size: 10px; }
+    .legend-pct  { font-size: 11px; }
+
+    .alert { padding: 12px 12px; }
+    .alert-body { font-size: 10px; }
+    .alert-sub  { font-size: 9px; }
+  }
+
+  @media (max-width: 400px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .mini-grid-2, .mini-grid-3, .mini-grid-4 { grid-template-columns: 1fr; }
+    .tabs { flex-wrap: wrap; }
   }
 </style>
 </head>
@@ -596,7 +649,16 @@ function showTab(id, btn) {
   document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   btn.classList.add('active');
+  sendHeight();
 }
+
+// ── Auto height reporting (for iframe embed) ──────────────────────────────────
+function sendHeight() {
+  const h = document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: 'ustDashHeight', height: h }, '*');
+}
+window.addEventListener('load', sendHeight);
+window.addEventListener('resize', sendHeight);
 </script>
 </body>
 </html>
